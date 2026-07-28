@@ -10,6 +10,7 @@ from rightsize.sizing import (
     decode_ceiling_tokens_per_sec,
     estimate_footprint,
     kv_cache_bytes,
+    shape_from_config,
 )
 
 DENSE_7B = ModelShape(
@@ -29,6 +30,67 @@ MOE_30B_A3B = ModelShape(
     kv_heads=4,
     head_dim=128,
 )
+
+
+class TestShapeFromConfig:
+    def test_reads_a_modern_gqa_config(self) -> None:
+        config = {
+            "num_hidden_layers": 32,
+            "num_attention_heads": 32,
+            "num_key_value_heads": 8,
+            "head_dim": 128,
+            "hidden_size": 4096,
+        }
+        shape = shape_from_config("candidate", config, total_params_b=7.0)
+        assert shape.layers == 32
+        assert shape.kv_heads == 8
+        assert shape.head_dim == 128
+
+    def test_derives_head_dim_when_absent(self) -> None:
+        config = {
+            "num_hidden_layers": 28,
+            "num_attention_heads": 16,
+            "num_key_value_heads": 4,
+            "hidden_size": 2048,
+        }
+        shape = shape_from_config("candidate", config, total_params_b=3.0)
+        assert shape.head_dim == 2048 // 16
+
+    def test_falls_back_to_query_heads_without_gqa(self) -> None:
+        """Pre-GQA models give every query head its own KV head. Assuming
+        GQA here would underestimate the cache by the head ratio."""
+        config = {
+            "num_hidden_layers": 32,
+            "num_attention_heads": 32,
+            "hidden_size": 4096,
+        }
+        shape = shape_from_config("legacy", config, total_params_b=7.0)
+        assert shape.kv_heads == 32
+
+    def test_gqa_fallback_changes_the_cache_materially(self) -> None:
+        base = {"num_hidden_layers": 32, "num_attention_heads": 32,
+                "hidden_size": 4096}
+        legacy = shape_from_config("legacy", base, 7.0)
+        gqa = shape_from_config("gqa", {**base, "num_key_value_heads": 8}, 7.0)
+        workload = Workload(4096, 8)
+        assert kv_cache_bytes(legacy, workload) == pytest.approx(
+            kv_cache_bytes(gqa, workload) * 4
+        )
+
+    def test_active_params_defaults_to_total_for_dense(self) -> None:
+        config = {"num_hidden_layers": 16, "num_attention_heads": 16,
+                  "num_key_value_heads": 8, "hidden_size": 1024}
+        shape = shape_from_config("dense", config, total_params_b=1.0)
+        assert shape.active_params_b == 1.0
+
+    def test_moe_keeps_total_and_active_separate(self) -> None:
+        config = {"num_hidden_layers": 48, "num_attention_heads": 32,
+                  "num_key_value_heads": 4, "hidden_size": 4096}
+        shape = shape_from_config(
+            "moe", config, total_params_b=30.0, active_params_b=3.0
+        )
+        assert shape.total_params_b == 30.0
+        assert shape.active_params_b == 3.0
 
 
 class TestBytesPerWeight:

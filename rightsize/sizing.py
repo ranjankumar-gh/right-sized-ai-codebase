@@ -56,6 +56,37 @@ class Footprint:
         return self.total_high_gib <= device_gib
 
 
+def shape_from_config(
+    name: str,
+    config: dict,
+    total_params_b: float,
+    active_params_b: float | None = None,
+) -> ModelShape:
+    """Build a ModelShape from a Hugging Face config.json.
+
+    Parameter counts are not in config.json, so they stay explicit. Take
+    them from the model card or the safetensors index rather than
+    inferring them from the name: a "7B" is rarely exactly 7.0e9, and a 3%
+    error lands exactly where memory ceilings are decided.
+    """
+    head_dim = config.get("head_dim")
+    if head_dim is None:
+        head_dim = config["hidden_size"] // config["num_attention_heads"]
+    return ModelShape(
+        name=name,
+        total_params_b=total_params_b,
+        active_params_b=active_params_b or total_params_b,
+        layers=config["num_hidden_layers"],
+        # Falls back to num_attention_heads for models predating GQA,
+        # where every query head has its own KV head. Assuming GQA where
+        # there is none underestimates the cache by the head ratio.
+        kv_heads=config.get(
+            "num_key_value_heads", config["num_attention_heads"]
+        ),
+        head_dim=head_dim,
+    )
+
+
 def bytes_per_weight(bits: float, group_size: int | None = 128) -> float:
     """Bytes per stored weight, including quantization scale metadata.
 
