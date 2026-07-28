@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Model weights and converted artifacts are never committed - they are downloaded
+# or produced by the chapter's own scripts.
+models/
+artifacts/
+*.gguf
+*.safetensors
+*.onnx
+*.engine
+
+# Measurement output
+runs/
+*.jsonl
