@@ -10,7 +10,7 @@ than silently averaged.
 import hashlib
 import statistics
 from dataclasses import dataclass, replace
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from rightsize.sizing import Footprint
 
@@ -56,12 +56,17 @@ class Generation:
         return (self.completion_tokens - 1) / decode_s
 
 
+@runtime_checkable
 class Runner(Protocol):
     """One execution path: a runtime, a model, and a quantization.
 
     Implementations wrap transformers, llama.cpp, Ollama, vLLM, or a
     recorded trace. The harness treats them as interchangeable, which is
     what makes a like-for-like comparison across runtimes possible.
+
+    Marked runtime_checkable so a custom runner can be isinstance-checked.
+    Note that this verifies method names only, not signatures: a runner with
+    a wrong generate() signature satisfies the check and fails when called.
     """
 
     name: str
