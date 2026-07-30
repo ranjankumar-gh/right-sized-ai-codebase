@@ -29,4 +29,19 @@ section below; those tests skip cleanly and are not required for the rest of the
 
 ## Chapter notes
 
-Setup notes specific to a chapter are added here as that chapter's increment is built.
+**Chapter 1** adds `rightsize/sizing.py`. Pure arithmetic, no dependencies. Run
+`uv run python examples/ch01_sizing.py` to estimate a footprint.
+
+**Chapter 2** adds `rightsize/bench.py`, the recorded backend, and
+`rightsize/runners/hf.py`. Run `uv run python examples/ch02_measure.py` for a worked
+comparison against the recorded backend, which needs no GPU and no weights.
+
+To exercise the real transformers runner you need `torch` and `transformers` installed,
+which this repository deliberately does not pin as dependencies, and a model to point at:
+
+```
+uv pip install torch transformers
+RIGHTSIZE_HF_MODEL=<a-small-model-id> uv run pytest tests/test_runners_hf.py -v
+```
+
+Without that variable set, those tests skip and the rest of the suite passes unaffected.
