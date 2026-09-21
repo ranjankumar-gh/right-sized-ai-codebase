@@ -84,3 +84,8 @@ date, not a standard - re-verify it before trusting it.
 decoding runs on, the four-number report that keeps a validity guarantee apart from a
 correctness claim, and a schema complexity score. Pure Python, no inference engine needed.
 Run `uv run python examples/ch08_constrained.py`.
+
+**Chapter 9** adds `rightsize/evaluate.py`: Wilson intervals, the resolution floor and its
+inverse (examples required to detect a given difference), per-slice evaluation with each
+slice scored against its own floor, a position-bias guard for model judges, n-gram
+contamination scoring, and the promotion gate. No dependencies, no inference needed.
