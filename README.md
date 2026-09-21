@@ -69,3 +69,8 @@ uv pip install torch transformers peft trl datasets
 the distillation-mode decision, and the KD objective implemented on one position so it can
 be read and tested without a GPU. `examples/ch05_distill.py` carries the batched torch
 version and needs `torch` installed.
+
+**Chapter 6** adds `rightsize/quantize.py`: a readable quantizer, the bit and group-size
+sweeps, percentile clipping, and the quantization plan. Pure arithmetic on a seeded
+Gaussian sample, so every figure the chapter prints reproduces in a second without a GPU.
+Run `uv run python examples/ch06_quantize.py`.
