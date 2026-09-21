@@ -104,3 +104,7 @@ directly rather than through an example script; see `tests/test_serve.py` for wo
 length actually reports, the energy envelope in tokens per joule, the duty-cycle split that
 decides whether model work matters at all on a battery device, no-swap memory headroom, and
 the unattended-readiness checklist.
+
+**Chapter 13** adds `rightsize/fleet.py`: the utilization inversion and its break-even,
+rollout duration over constrained links, version-tail convergence, and the telemetry
+allow-list. Pure arithmetic, no fleet required.
