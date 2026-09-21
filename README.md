@@ -108,3 +108,7 @@ the unattended-readiness checklist.
 **Chapter 13** adds `rightsize/fleet.py`: the utilization inversion and its break-even,
 rollout duration over constrained links, version-tail convergence, and the telemetry
 allow-list. Pure arithmetic, no fleet required.
+
+**Chapter 14** adds `rightsize/cases.py`: `DeploymentProfile`, the primary-constraint rule,
+and `select_techniques`, which sorts the book into what binds, what merely works, and what
+cannot apply to a given deployment. The inert list is the one worth reading first.
