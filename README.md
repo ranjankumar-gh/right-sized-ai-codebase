@@ -51,3 +51,15 @@ Without that variable set, those tests skip and the rest of the suite passes una
 `uv run python examples/ch03_capability.py` to compute a model's overtraining multiple and
 its parameter budget. The tests verify the budget against Google's published 170M/100M
 split for Gemma 3 270M and against SmolLM3 3B's released parameter count.
+
+**Chapter 4** adds `rightsize/adapt.py`: the LoRA adapter budget, the training-memory
+estimator that chooses between full fine-tuning, LoRA, and QLoRA, the loss-mask and
+chat-template guards, and the deployment gate. The module itself has no ML dependencies
+and its tests run without a GPU.
+
+`examples/ch04_finetune.py` and `examples/ch04_preference.py` are real training scripts
+and do need the training stack, which this repository deliberately does not pin:
+
+```
+uv pip install torch transformers peft trl datasets
+```
