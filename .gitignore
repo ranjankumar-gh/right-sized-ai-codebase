@@ -14,6 +14,9 @@ artifacts/
 *.onnx
 *.engine
 
-# Measurement output
+# Training output and measurement output
+out/
 runs/
 *.jsonl
+# The small synthetic chapter inputs are committed; real data is not.
+!data/*.jsonl

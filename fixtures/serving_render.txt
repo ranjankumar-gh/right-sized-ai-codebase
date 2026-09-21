@@ -1,0 +1,4 @@
+# SYNTHETIC FIXTURE: a hand-written placeholder, not a capture. Replace it with the serving path's render of the same conversation before trusting guard two.
+<|im_start|>user
+Summarize the incident in one sentence.<|im_end|>
+<|im_start|>assistant
