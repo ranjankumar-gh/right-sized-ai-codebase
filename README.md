@@ -99,3 +99,8 @@ length, and the composition gate. Run `uv run python examples/ch10_compose.py`.
 inverted), block accounting and fragmentation, prefix-cache saving, goodput and preemption
 rate, and context-aware admission control. The chapter prints its tables from the module
 directly rather than through an example script; see `tests/test_serve.py` for worked values.
+
+**Chapter 12** adds `rightsize/edge.py`: the thermal derate and what a benchmark of a given
+length actually reports, the energy envelope in tokens per joule, the duty-cycle split that
+decides whether model work matters at all on a battery device, no-swap memory headroom, and
+the unattended-readiness checklist.
