@@ -45,3 +45,9 @@ RIGHTSIZE_HF_MODEL=<a-small-model-id> uv run pytest tests/test_runners_hf.py -v
 ```
 
 Without that variable set, those tests skip and the rest of the suite passes unaffected.
+
+**Chapter 3** adds `rightsize/capability.py`. Pure arithmetic over a model card and a
+`config.json`, with no dependencies and no network access. Run
+`uv run python examples/ch03_capability.py` to compute a model's overtraining multiple and
+its parameter budget. The tests verify the budget against Google's published 170M/100M
+split for Gemma 3 270M and against SmolLM3 3B's released parameter count.
