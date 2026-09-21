@@ -89,3 +89,8 @@ Run `uv run python examples/ch08_constrained.py`.
 inverse (examples required to detect a given difference), per-slice evaluation with each
 slice scored against its own floor, a position-bias guard for model judges, n-gram
 contamination scoring, and the promotion gate. No dependencies, no inference needed.
+
+**Chapter 10** adds `rightsize/compose.py`: cascade economics with the break-even and
+headroom, the cascade latency tax and its bimodal quantiles, the top-two-margin escalation
+signal with the Chapter 8 schema interlock, speculative decoding speedup and optimal draft
+length, and the composition gate. Run `uv run python examples/ch10_compose.py`.
