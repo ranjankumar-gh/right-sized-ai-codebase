@@ -112,3 +112,8 @@ allow-list. Pure arithmetic, no fleet required.
 **Chapter 14** adds `rightsize/cases.py`: `DeploymentProfile`, the primary-constraint rule,
 and `select_techniques`, which sorts the book into what binds, what merely works, and what
 cannot apply to a given deployment. The inert list is the one worth reading first.
+
+**Chapter 15** adds `rightsize/limits.py`: `SizeResponse`, which says whether a measured
+quality difference across model sizes can be distinguished from noise on your task set, and
+`LimitCheck`, the gate that must pass before escalating model size. It is the one gate in
+the book that blocks a retreat rather than a change.
