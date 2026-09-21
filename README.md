@@ -74,3 +74,8 @@ version and needs `torch` installed.
 sweeps, percentile clipping, and the quantization plan. Pure arithmetic on a seeded
 Gaussian sample, so every figure the chapter prints reproduces in a second without a GPU.
 Run `uv run python examples/ch06_quantize.py`.
+
+**Chapter 7** adds `rightsize/artifact.py`: a parser for llama.cpp quantization type names,
+a runtime support matrix that carries its own verification date, and an artifact lineage
+record that detects a model quantized twice. The `VLLM` value is a snapshot verified on one
+date, not a standard - re-verify it before trusting it.
