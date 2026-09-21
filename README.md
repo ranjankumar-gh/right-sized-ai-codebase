@@ -117,3 +117,15 @@ cannot apply to a given deployment. The inert list is the one worth reading firs
 quality difference across model sizes can be distinguished from noise on your task set, and
 `LimitCheck`, the gate that must pass before escalating model size. It is the one gate in
 the book that blocks a retreat rather than a change.
+
+## Reproducing the book's tables
+
+Chapters 1 to 10 each ship their own example script. Chapters 11 to 15 print their tables
+from the modules directly, so one script reproduces all of Part V:
+
+```
+uv run python examples/reproduce_tables.py
+```
+
+Every figure it prints appears in the book, and every one is also asserted in `tests/`, so
+a change that moves a number fails the suite rather than silently contradicting the text.
