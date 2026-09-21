@@ -63,3 +63,9 @@ and do need the training stack, which this repository deliberately does not pin:
 ```
 uv pip install torch transformers peft trl datasets
 ```
+
+**Chapter 5** adds `rightsize/compress.py`: pruning plans read through Chapter 3's
+`parameter_budget`, the embedding floor that limits them, activation-importance selection,
+the distillation-mode decision, and the KD objective implemented on one position so it can
+be read and tested without a GPU. `examples/ch05_distill.py` carries the batched torch
+version and needs `torch` installed.
