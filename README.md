@@ -79,3 +79,8 @@ Run `uv run python examples/ch06_quantize.py`.
 a runtime support matrix that carries its own verification date, and an artifact lineage
 record that detects a model quantized twice. The `VLLM` value is a snapshot verified on one
 date, not a standard - re-verify it before trusting it.
+
+**Chapter 8** adds `rightsize/structured.py`: the token-masking mechanism constrained
+decoding runs on, the four-number report that keeps a validity guarantee apart from a
+correctness claim, and a schema complexity score. Pure Python, no inference engine needed.
+Run `uv run python examples/ch08_constrained.py`.
