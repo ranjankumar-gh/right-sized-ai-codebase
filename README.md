@@ -94,3 +94,8 @@ contamination scoring, and the promotion gate. No dependencies, no inference nee
 headroom, the cascade latency tax and its bimodal quantiles, the top-two-margin escalation
 signal with the Chapter 8 schema interlock, speculative decoding speedup and optimal draft
 length, and the composition gate. Run `uv run python examples/ch10_compose.py`.
+
+**Chapter 11** adds `rightsize/serve.py`: the concurrency ceiling (Chapter 1's KV arithmetic
+inverted), block accounting and fragmentation, prefix-cache saving, goodput and preemption
+rate, and context-aware admission control. The chapter prints its tables from the module
+directly rather than through an example script; see `tests/test_serve.py` for worked values.
