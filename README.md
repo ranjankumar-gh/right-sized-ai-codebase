@@ -27,6 +27,23 @@ Tests run without a GPU and without downloading model weights. Anything that nee
 or a real model is skip-guarded behind an environment variable and documented in the chapter
 section below; those tests skip cleanly and are not required for the rest of the suite to pass.
 
+To run the guarded ones as well, install the `hf` extra and name a small model:
+
+```
+uv run --extra hf --with pytest python -m pytest tests/ -v
+```
+
+with `RIGHTSIZE_HF_MODEL` set. `hf-internal-testing/tiny-random-gpt2` downloads in seconds and
+is enough to exercise the runner end to end:
+
+```
+RIGHTSIZE_HF_MODEL=hf-internal-testing/tiny-random-gpt2    # bash
+$env:RIGHTSIZE_HF_MODEL = "hf-internal-testing/tiny-random-gpt2"   # PowerShell
+```
+
+The guarded tests are worth running at least once. A guard that has never been lifted is an
+assumption, not a check.
+
 ## Chapter notes
 
 **Chapter 1** adds `rightsize/sizing.py`. Pure arithmetic, no dependencies. Run
