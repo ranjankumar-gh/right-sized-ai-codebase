@@ -146,3 +146,11 @@ uv run python examples/reproduce_tables.py
 
 Every figure it prints appears in the book, and every one is also asserted in `tests/`, so
 a change that moves a number fails the suite rather than silently contradicting the text.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+The code is deliberately more permissive than the book it accompanies. The book's prose is
+all rights reserved; this repository is yours to use in production, commercial work included,
+without asking.
