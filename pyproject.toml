@@ -6,6 +6,8 @@ readme = "README.md"
 authors = [
     { name = "Ranjan Kumar", email = "mail4ranjan@gmail.com" }
 ]
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 # The package core is dependency-free on purpose: every computed table in the
 # book is arithmetic, so it runs and tests anywhere. Only the transformers
