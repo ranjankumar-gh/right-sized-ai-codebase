@@ -7,7 +7,16 @@ authors = [
     { name = "Ranjan Kumar", email = "mail4ranjan@gmail.com" }
 ]
 requires-python = ">=3.11"
+# The package core is dependency-free on purpose: every computed table in the
+# book is arithmetic, so it runs and tests anywhere. Only the transformers
+# runner needs weights, and it lives behind this extra.
 dependencies = []
+
+[project.optional-dependencies]
+hf = [
+    "torch",
+    "transformers",
+]
 
 [build-system]
 requires = ["uv_build>=0.10.2,<0.11.0"]
