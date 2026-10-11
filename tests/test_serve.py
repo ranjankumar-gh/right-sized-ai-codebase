@@ -16,7 +16,7 @@ from rightsize.serve import (
     preemption_rate,
     serving_concerns,
 )
-from rightsize.sizing import ModelShape
+from rightsize.sizing import GIB, ModelShape
 
 SEVEN_B = ModelShape(
     name="7B-class dense",
@@ -277,3 +277,14 @@ def test_a_ceiling_of_one_says_batching_cannot_help():
 
 def test_a_correctly_planned_deployment_has_no_concerns():
     assert serving_concerns(_capacity(48, 8192), measured_context_tokens=8192) == []
+
+
+def test_a_hybrid_request_is_not_its_length_times_the_per_token_cost():
+    """Ch11 asks Ch1 for whole requests, so windowed layers stop growing."""
+    hybrid = ModelShape(
+        "5:1 sliding:full", 4.0, 4.0, 36, kv_heads=8, head_dim=128,
+        full_attention_layers=6, window_layers=30, window_tokens=512,
+    )
+    capacity = ServingCapacity(hybrid, 24, 32768)
+    scaled = kv_bytes_per_token(hybrid) * 32768 / GIB
+    assert capacity.gib_per_request < scaled / 5
