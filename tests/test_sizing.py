@@ -202,3 +202,121 @@ class TestDecodeCeiling:
         assert decode_ceiling_tokens_per_sec(
             DENSE_7B, 900.0
         ) == pytest.approx(900.0 / active_gib)
+
+
+MIB = 1024**2
+_FOUR_B = dict(
+    total_params_b=4.0, active_params_b=4.0, layers=36, kv_heads=8, head_dim=128
+)
+ALL_FULL_4B = ModelShape("all full attention", **_FOUR_B)
+SLIDING_5_TO_1 = ModelShape(
+    "5:1 sliding:full",
+    **_FOUR_B,
+    full_attention_layers=6,
+    window_layers=30,
+    window_tokens=1024,
+)
+LINEAR_3_TO_1 = ModelShape(
+    "3:1 linear:full",
+    **_FOUR_B,
+    full_attention_layers=9,
+    state_bytes_per_sequence=27 * 2 * MIB,
+)
+MOSTLY_RECURRENT = ModelShape(
+    "4 attention, 32 recurrent",
+    **_FOUR_B,
+    full_attention_layers=4,
+    state_bytes_per_sequence=32 * 2 * MIB,
+)
+
+
+class TestHybridLayouts:
+    """Chapter 1, "Hybrid and windowed attention break the layer count"."""
+
+    def test_defaults_reproduce_the_all_full_attention_estimate(self) -> None:
+        explicit = ModelShape("explicit", **_FOUR_B, full_attention_layers=36)
+        workload = Workload(8192, 16)
+        assert kv_cache_bytes(explicit, workload) == kv_cache_bytes(
+            ALL_FULL_4B, workload
+        )
+
+    def test_the_hybrid_table_matches_the_chapter(self) -> None:
+        """tbl-hybrid: 8k and 32k context, batch 16, 16-bit cache."""
+        expected = {
+            ALL_FULL_4B: (18.00, 72.00),
+            SLIDING_5_TO_1: (4.875, 13.875),
+            LINEAR_3_TO_1: (5.34, 18.84),
+            MOSTLY_RECURRENT: (3.00, 9.00),
+        }
+        for shape, (at_8k, at_32k) in expected.items():
+            got_8k = kv_cache_bytes(shape, Workload(8192, 16)) / GIB
+            got_32k = kv_cache_bytes(shape, Workload(32768, 16)) / GIB
+            assert got_8k == pytest.approx(at_8k, abs=0.005)
+            assert got_32k == pytest.approx(at_32k, abs=0.005)
+
+    def test_layer_count_overstates_hybrids_three_to_eight_times(self) -> None:
+        for context in (8192, 32768):
+            naive = kv_cache_bytes(ALL_FULL_4B, Workload(context, 16))
+            for shape in (SLIDING_5_TO_1, LINEAR_3_TO_1, MOSTLY_RECURRENT):
+                ratio = naive / kv_cache_bytes(shape, Workload(context, 16))
+                assert 3.0 < ratio < 8.5
+
+    def test_window_layers_stop_growing_at_the_window(self) -> None:
+        only_windows = ModelShape(
+            "windows", **_FOUR_B, full_attention_layers=0,
+            window_layers=36, window_tokens=512,
+        )
+        assert kv_cache_bytes(only_windows, Workload(4096, 1)) == (
+            kv_cache_bytes(only_windows, Workload(512, 1))
+        )
+
+    def test_recurrent_state_is_per_sequence_not_per_token(self) -> None:
+        stateful = ModelShape(
+            "stateful", **_FOUR_B, full_attention_layers=0,
+            state_bytes_per_sequence=64 * MIB,
+        )
+        assert kv_cache_bytes(stateful, Workload(128, 4)) == 4 * 64 * MIB
+        assert kv_cache_bytes(stateful, Workload(32768, 4)) == 4 * 64 * MIB
+
+    def test_reads_layer_types_from_a_hybrid_config(self) -> None:
+        config = {
+            "num_hidden_layers": 6,
+            "num_attention_heads": 8,
+            "num_key_value_heads": 4,
+            "head_dim": 128,
+            "sliding_window": 512,
+            "layer_types": ["sliding_attention"] * 5 + ["full_attention"],
+        }
+        shape = shape_from_config("gemma-like", config, total_params_b=1.0)
+        assert shape.full_attention_layers == 1
+        assert shape.window_layers == 5
+        assert shape.window_tokens == 512
+
+    def test_non_attention_layers_hold_no_growing_cache(self) -> None:
+        config = {
+            "num_hidden_layers": 4,
+            "num_attention_heads": 8,
+            "num_key_value_heads": 4,
+            "head_dim": 128,
+            "layer_types": ["mamba", "mamba", "mamba", "attention"],
+        }
+        shape = shape_from_config(
+            "hybrid", config, total_params_b=1.0,
+            state_bytes_per_sequence=3 * MIB,
+        )
+        assert shape.full_attention_layers == 1
+        assert shape.window_layers == 0
+        assert shape.state_bytes_per_sequence == 3 * MIB
+
+    def test_a_config_without_layer_types_is_all_full_attention(self) -> None:
+        config = {
+            "num_hidden_layers": 32,
+            "num_attention_heads": 32,
+            "num_key_value_heads": 8,
+            "head_dim": 128,
+        }
+        shape = shape_from_config("dense", config, total_params_b=7.0)
+        assert shape.full_attention_layers is None
+        assert kv_cache_bytes(shape, Workload(8192, 16)) == kv_cache_bytes(
+            DENSE_7B, Workload(8192, 16)
+        )

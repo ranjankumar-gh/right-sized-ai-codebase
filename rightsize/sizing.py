@@ -28,6 +28,13 @@ class ModelShape:
     layers: int
     kv_heads: int
     head_dim: int
+    # Hybrid and windowed layouts. The defaults describe a model whose every
+    # layer is full attention; see "Hybrid and windowed attention break the
+    # layer count" in Chapter 1 for the models where they do not hold.
+    full_attention_layers: int | None = None  # None means every layer.
+    window_layers: int = 0  # Attention over the last window_tokens only.
+    window_tokens: int = 0
+    state_bytes_per_sequence: float = 0  # Fixed recurrent state, all layers.
 
 
 @dataclass(frozen=True)
@@ -61,6 +68,7 @@ def shape_from_config(
     config: dict,
     total_params_b: float,
     active_params_b: float | None = None,
+    state_bytes_per_sequence: float = 0,
 ) -> ModelShape:
     """Build a ModelShape from a Hugging Face config.json.
 
@@ -72,6 +80,15 @@ def shape_from_config(
     head_dim = config.get("head_dim")
     if head_dim is None:
         head_dim = config["hidden_size"] // config["num_attention_heads"]
+    # Hybrid configs list each layer's kind. Anything that is neither full
+    # nor sliding attention (Mamba, linear attention, MLP-only) holds no
+    # growing cache; its fixed state is not in the config, so it is passed
+    # in as state_bytes_per_sequence.
+    kinds = config.get("layer_types")
+    full_layers = window_layers = None
+    if kinds:
+        full_layers = sum(k in ("full_attention", "attention") for k in kinds)
+        window_layers = sum(k == "sliding_attention" for k in kinds)
     return ModelShape(
         name=name,
         total_params_b=total_params_b,
@@ -84,6 +101,10 @@ def shape_from_config(
             "num_key_value_heads", config["num_attention_heads"]
         ),
         head_dim=head_dim,
+        full_attention_layers=full_layers,
+        window_layers=window_layers or 0,
+        window_tokens=(config.get("sliding_window") or 0) if window_layers else 0,
+        state_bytes_per_sequence=state_bytes_per_sequence,
     )
 
 
@@ -111,17 +132,26 @@ def kv_cache_bytes(
     ratio between them, which is why nearly every current small model uses
     it.
 
-    Unlike the weights, this term is linear in both context length and
+    Only full-attention layers grow with context. A sliding-window layer
+    stops growing at its window, and a recurrent layer holds a fixed state
+    however long the sequence gets. For a model whose every layer is full
+    attention, the default, this term is linear in both context length and
     batch size, which is why it is the term that most often ends a
     deployment.
     """
     per_token_per_layer = 2 * shape.kv_heads * shape.head_dim * (kv_bits / 8)
-    return (
-        per_token_per_layer
-        * shape.layers
-        * workload.context_tokens
-        * workload.batch_size
+    full_layers = shape.full_attention_layers
+    if full_layers is None:
+        full_layers = shape.layers
+    context = workload.context_tokens
+    cached_tokens = (
+        full_layers * context
+        + shape.window_layers * min(context, shape.window_tokens)
     )
+    per_sequence = (
+        per_token_per_layer * cached_tokens + shape.state_bytes_per_sequence
+    )
+    return per_sequence * workload.batch_size
 
 
 def estimate_footprint(
