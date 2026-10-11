@@ -9,7 +9,8 @@ def kv_bytes_per_token(shape: ModelShape, kv_bits: float = 16) -> float:
 
     Chapter 1 computed this for a whole workload. Serving needs it per
     token, because the question here is how many tokens fit rather than
-    whether one workload does.
+    whether one workload does. Exact only when every layer is full
+    attention; a hybrid's cache is not proportional to its length.
     """
     return kv_cache_bytes(shape, Workload(context_tokens=1, batch_size=1), kv_bits)
 
@@ -43,8 +44,11 @@ class ServingCapacity:
 
     @property
     def gib_per_request(self) -> float:
-        per_token = kv_bytes_per_token(self.shape, self.kv_bits)
-        return per_token * self.context_tokens / GIB
+        """Asked of Chapter 1 for one whole request rather than scaled up
+        from kv_bytes_per_token, because on a hybrid model part of the
+        cache stops growing with context."""
+        request = Workload(context_tokens=self.context_tokens, batch_size=1)
+        return kv_cache_bytes(self.shape, request, self.kv_bits) / GIB
 
     @property
     def concurrency_ceiling(self) -> int:
